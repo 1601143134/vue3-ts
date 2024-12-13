@@ -9,7 +9,7 @@ const routes: Array<RouteRecordRaw> = [
     children: [
       {
         path: '/',
-        redirect: '/Tiptap'
+        redirect: '/svg'
       },
       {
         path: '/flow',
@@ -25,6 +25,11 @@ const routes: Array<RouteRecordRaw> = [
         path: '/svg',
         meta: { footer: false, menuId: 'login' },
         component: () => import('@/components/SVGFlow/index.vue')
+      },
+      {
+        path: '/rotate',
+        meta: { footer: false, menuId: 'login' },
+        component: () => import('@/components/Rotate/index.vue')
       },
     ]
   }

@@ -6,13 +6,6 @@
     @mousedown="onMousedown"
     @mouseup="onMouseup">
     <div @click="findFixPoint" ref="ball" class="ball"></div>
-    <div class="attrs-box">
-      <div>X: {{ resizeBox.x }}</div>
-      <div>Y: {{ resizeBox.y }}</div>
-      <div>宽：{{ resizeBox.w }}</div>
-      <div>高：{{ resizeBox.h }}</div>
-      <div>角度：{{ resizeBox.r }}</div>
-    </div>
     <svg
       id="svgElement"
       ref="svgRef"
@@ -25,46 +18,52 @@
     >
       <!-- 定义箭头标记 -->
       <defs>
-        <marker id="line1733983998954" markerWidth="10" markerHeight="7" refX="8" refY="3.5" orient="auto">
-          <polygon points="0 0, 10 3.5, 0 7" fill="rgb(20, 123, 227)"></polygon>
+        <!-- 起点箭头 -->
+        <marker id="startArrow" markerWidth="10" markerHeight="10" refX="10" refY="5" orient="auto">
+          <path d="M10 0 L0 5 L10 10 Z" fill="black" />
         </marker>
-        
+        <!-- 终点箭头 -->
+        <marker id="endArrow" markerWidth="10" markerHeight="10" refX="0" refY="5" orient="auto">
+          <path d="M0 0 L10 5 L0 10 Z" fill="black" />
+        </marker>
+        <marker id="arrow" markerWidth="10" markerHeight="10" refX="5" refY="5" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L10,5 L0,10 Z" fill="black" />
+    </marker>
       </defs>
-      <!-- <g>
-        <path class="line" marker-end="url(#line1733983998954)" d="M620,326 L640,326 L760,326 L760,273 L880,273 L900,273" fill="none"></path>
-      </g> -->
       <node 
         v-for="(n) in nodeArry" 
         :key="n.id" 
         :rect="n.rect" 
         :type="n.type" 
         :id="n.id"
-        @mousedown.stop="onClickNode($event,n)"
+        @click="onClickNode(n)"
         @mouseover="onHoverNode(n)"
-        @mouseleave="onMouseleaveNode(n)" 
-      />
-
-      <g 
-        v-show="isResize" 
-        :transform="`rotate(${resizeBox.r},${resizeBox.x + resizeBox.w / 2},${resizeBox.y + resizeBox.h / 2})`"  
-        class="top"
-        @mousedown.stop="tirggerOperate"
-        :class="{ 'visibility-hidden': hidden }"
-      >
-        <image dir="rotate" :x="resizeBox.x - 30" :y="resizeBox.y - 25" :transform="`rotate(35,${(resizeBox.x - 30) + 15},${(resizeBox.y - 25) + 15})`" width="30" height="30" href="../../assets/旋转.png" ></image>
-        <rect dir="move" :x="resizeBox.x" :y="resizeBox.y" :width="resizeBox.w" :height="resizeBox.h" fill="rgba(0,0,0,0)" stroke="rgb(20, 123, 227)"></rect>
-        <rect 
-          v-for="(point) in operatePoint" :key="point.name"
-          :style="{ cursor: point.cursor }"
-          :x="point.x" 
-          :y="point.y" 
-          :dir="point.name"
-          width="10"
-          height="10" 
-          fill="white" 
-          stroke="rgb(20, 123, 227)"
-        ></rect>
+        @mouseleave="onMouseleaveNode(n)"></node>
+   
+      <g :transform="resizeRotate" @mousedown.stop="onResize" v-if="isResize" class="top">
+        <rect :x="resizeBox.x" :y="resizeBox.y" :width="resizeBox.w" :height="resizeBox.h" fill="none" stroke="rgb(20, 123, 227)"></rect>
+        <rect dir="lt" :x="resizeBox.x - (10/2)" :y="resizeBox.y - (10/2)" width="10" height="10" fill="white" stroke="rgb(20, 123, 227)" class="left-top"></rect>
+        <rect dir="rt" :x="resizeBox.x + resizeBox.w - (10/2)" :y="resizeBox.y - (10/2)" width="10" height="10" fill="white" stroke="rgb(20, 123, 227)" class="right-top"></rect>
+        <rect dir="rb" :x="resizeBox.x + resizeBox.w - (10/2)" :y="resizeBox.y + resizeBox.h - (10/2)" width="10" height="10" fill="white" stroke="rgb(20, 123, 227)" class="right-bottom"></rect>
+        <rect dir="lb" :x="resizeBox.x - (10/2)" :y="resizeBox.y + resizeBox.h - (10/2)" width="10" height="10" fill="white" stroke="rgb(20, 123, 227)" class="left-bottom"></rect>
+        <rect dir="rotate" :x="resizeBox.x - 20" :y="resizeBox.y - 20" width="10" height="10" fill="salmon"></rect>
       </g>
+
+      <!-- line -->
+      <!-- <g>
+        <circle cx="500" cy="500" r="100" fill="salmon"></circle>
+        <circle cx="500" cy="500" r="100" fill="salmon"></circle>
+        <circle cx="500" cy="500" r="100" fill="salmon"></circle>
+        <circle cx="500" cy="500" r="100" fill="salmon"></circle>
+      </g> -->
+         <!-- <polygon points="100,20 120,100 100,180 50,100" fill="none" stroke="black" stroke-width="2" /> -->
+      <!-- <circle cx="500" cy="500" r="100" fill="salmon"></circle>
+      <rect x="100" y="100" width="280" height="180" rx="15" ry="15" fill="salmon" />
+      <ellipse cx="100" cy="100" rx="50" ry="50" fill="blue" stroke="black" stroke-width="2" /> -->
+      <!-- <rect x="50" y="50" width="100" height="100" fill="blue"
+        transform="rotate(45, 100, 100)" /> -->
+        <!-- <polygon points="0,0 5,20 0,40" transform="rotate(90 50 50)" fill="black"/> -->
+      <!-- resize -->
     </svg>
 
     <!-- 工具栏 -->
@@ -84,6 +83,7 @@
         :class="[ createType.type == item.type ? 'active' : '']"
         @mousedown.stop="onToolBar(item)">
         <div class="add-block">
+          
           <img v-if="item.imgUrl" :src="requireImg(item.imgUrl)" />
           <svg v-else>
             <path :d="item.d" fill="none" stroke="rgb(108,109,110)" stroke-width="2"></path>
@@ -106,9 +106,8 @@
 
 <script setup>
 // 思考：坐标系放大，scale = 1.5 坐标原本1px的距离是不是也会跟着放大？
-import originOperate from './utils/operate-point'
 import { ref,reactive,onMounted,computed,watch } from "vue"
-import { useElementBounding,useMagicKeys,onKeyDown } from '@vueuse/core'
+import { useElementBounding,useMagicKeys } from '@vueuse/core'
 import node from './component/node.vue'
 import circle from './component/circle.vue'
 import { v4 as uuidv4 } from 'uuid'
@@ -120,9 +119,6 @@ import {
   distance,
   angleToRadian,
   midpoint,
-  verticalLinePoint,
-  startEndPointToLine,
-  pointOnLine,
   getIncreaseSize } from "./utils/helper"
 defineOptions({
   name: 'SvgComponent',
@@ -149,7 +145,10 @@ let resizeBox = ref({
   h: 0,
   r: 0
 })
-
+// let resizeRotate = computed(() => {
+//   return `rotate(${resizeBox.value.r},${resizeBox.value.x + resizeBox.value.w / 2},${resizeBox.value.y + resizeBox.value.h / 2})`
+// })
+let resizeRotate = ref('')
 // 连线
 let hoverConnectNode = ref({
   x: 0,
@@ -158,25 +157,6 @@ let hoverConnectNode = ref({
   height: 0,
 })
 
-let startPoint = ref({x: 0, y: 0})
-let lastPoint = ref({x: 0, y: 0})
-let toolBarRect = ref({x: 1200, y: 135, ox: 0,oy: 0})
-let toolHandleMove = ref(false)
-let toolBar = ref(null)
-let createType = ref({
-  name: '',
-  type: null,
-  imgUrl: ''
-})
-let isOnCreate = ref(false)  // 选择创建类型
-let isAddNew = ref(false)    // 已添加了图形，未开始绘制
-let isDraw = ref(false)
-
-let attrsNode = ref({
-  w: 0,
-  h: 0,
-  r: 0
-})
 
 const setViewPort = () => {
   if (!svgWrapperRef.value) return;
@@ -187,19 +167,7 @@ onMounted(() => {
   setViewPort();
 });
 // 鼠标滚轮
-const { ctrl, shift, Delete } = useMagicKeys()
-watch(Delete, (n) => {
-  if(n) {
-    for(let i=0;i<nodeArry.value.length;i++) {
-      const node = nodeArry.value[i]
-      if(node.id == tempNode.id) {
-        nodeArry.value.splice(i,1)
-        isResize.value = false
-        break
-      }
-    }
-  }
-})
+const { ctrl, shift } = useMagicKeys()
 let scale = 1, min = 0.2, max = 5, step = 30
 function handleWheel(e) {
   e.preventDefault();
@@ -279,7 +247,7 @@ const onMousedown = (e) => {
     nodeArry.value.push(createNode())
     tempNode = nodeArry.value[nodeArry.value.length - 1]
   }
-  isResize.value = false
+  // isResize.value = false
 }
 
 const onMouseup = (e) => {
@@ -293,15 +261,6 @@ const onMouseup = (e) => {
       isDraw.value = false
       isOnCreate.value = false
       createType.value = {name: '', type: -1, imgUrl: ''}
-      setResizeBox(
-        tempNode.rect.x,
-        tempNode.rect.y,
-        tempNode.rect.width,
-        tempNode.rect.height,
-        tempNode.rect.rotate
-      )
-      // setOperatePoint(originOperate, tempNode)
-      isResize.value = true
     }
     isAddNew.value = false
   }
@@ -310,41 +269,25 @@ const onMouseup = (e) => {
     resizeDirection = ''
   }
 
-  if(controlMove.value) {
-    controlMove.value = false
-  }
-
-  if(hidden.value) {
-    hidden.value = false
-  }
-
   isRotate = false
   // const { rect } = tempNode
+  // calculateNewCenter(rect.x, rect.y, rect.width, rect.height, )
 
   // tempNode = null
 }
-
-const onClickNode = (e,node) => {
-  console.log(node,'onClickNode---')
-  if(!isResize.value) {
-    isResize.value = true
-  }
+const onClickNode = (node) => {
+  console.log(node,'mo---')
+  if(!isResize.value) isResize.value = true
   tempNode = node
   // 设置操作框的大小
-  setResizeBox(
-    tempNode.rect.x,
-    tempNode.rect.y,
-    tempNode.rect.width,
-    tempNode.rect.height,
-    tempNode.rect.rotate
-  )
-  setOperatePoint(originOperate, tempNode)
-  onResizeStartMove(e)
-  e.preventDefault()
-  attrsNode.value.w = tempNode.rect.width
-  attrsNode.value.h = tempNode.rect.height
-  attrsNode.value.r = tempNode.rect.rotate
+  resizeBox.value.x = tempNode.rect.x
+  resizeBox.value.y = tempNode.rect.y
+  resizeBox.value.w = tempNode.rect.width
+  resizeBox.value.h = tempNode.rect.height
+  resizeBox.value.r = tempNode.rect.rotate
+
   // 获取resizeBox 鼠标坐标
+  
 }
 
 
@@ -357,76 +300,60 @@ const onMouseleaveNode = (node) => {
 
 }
 
+function getOppositeCorner(rect, clickedPoint) {
+  const { x1, y1, x2, y2 } = rect; // 矩形的四个顶点
+  const { px, py } = clickedPoint; // 点击的点
 
+  // 计算矩形中心点
+  const cx = (x1 + x2) / 2;
+  const cy = (y1 + y2) / 2;
+
+  // 计算对角点
+  const qx = 2 * cx - px;
+  const qy = 2 * cy - py;
+
+  return { qx, qy };
+}
 let ball = ref(null)
 let isRotate = false;
 let rotatePoint = null
 let origin = null
-let initPoint = { x:0, y:0 }
-let oppositePoint = { x:0, y:0 }
-let lineCenter = { x:0, y:0 }
-let operatePoint = ref([])
-
-const setOperatePoint = (pArry = [], node) => {
-  const { rect } = node
-  operatePoint.value = pArry.map(p => {
-    return {
-      name: p.name,
-      x: rect.x + (rect.width / 100) * p.position.x - 5,
-      y: rect.y + (rect.height / 100) * p.position.y - 5,
-      angle: p.angle,
-      cursor: getCursor(rect.rotate + p.angle)
-    }
-  })
-}
-
-const getCursor = (angle) => {
-  let a = angle;
-  if (a < 0) {
-    a += 360;
-  }
-  if (a >= 360) {
-    a -= 360;
-  }
-  if (a >= 338 || a < 23 || (a > 157 && a <= 202)) {
-    return "ew-resize";
-  } else if ((a >= 23 && a < 68) || (a > 202 && a <= 247)) {
-    return "nwse-resize";
-  } else if ((a >= 68 && a < 113) || (a > 247 && a <= 292)) {
-    return "ns-resize";
-  } else {
-    return "nesw-resize";
-  }
-};
-
-// 操作框
-const tirggerOperate = (e) => {
+let initPoint = { x:0, y:0}
+let oppositePoint = { x:0, y:0}
+const onResize = (e) => {
   const type = e.target.getAttribute('dir')
   const { rect } = tempNode
   if(type == 'rotate') {
+    // console.log('roatte')
     isRotate = true
-  }
-  else if(type == 'move') {
-    onResizeStartMove(e)
+    // console.log(tempNode,'tempNode')
+    // console.log(resizeBox.value,'tempNode')
+    const center = {
+      x: rect.x + (rect.width / 2),
+      y: rect.y + (rect.height / 2)
+    }
+    console.log(center,'center')
+    resizeRotate.value = `rotate(${resizeBox.value.r},${resizeBox.value.x + resizeBox.value.w / 2},${resizeBox.value.y + resizeBox.value.h / 2})`
+    ball.value.style.left = resizeBox.value.x + resizeBox.value.w / 2 + 'px'
+    ball.value.style.top = resizeBox.value.y + resizeBox.value.h / 2  + 'px'
   }
   else{
     // 无论落点在哪里，找到锚点的具体位置，根据锚点进行计算
-    // 如果是中点，取任意对角线
     // 1、确定对角点
     switch(type) {
-      case 'right-bottom': 
+      case 'rb': 
         resizePoint.x = rect.x + rect.width
         resizePoint.y = rect.y + rect.height
         break;
-      case 'bottom-left':
+      case 'lb':
         resizePoint.x = rect.x
         resizePoint.y = rect.y + rect.height
         break;
-      case 'top-right': 
+      case 'rt': 
         resizePoint.x = rect.x + rect.width
         resizePoint.y = rect.y
         break;
-      case 'left-top': 
+      case 'lt': 
         resizePoint.x = rect.x
         resizePoint.y = rect.y
         break;
@@ -439,25 +366,35 @@ const tirggerOperate = (e) => {
       x: rect.x + (rect.width / 2),
       y: rect.y + (rect.height / 2)
     }
+
     // resizePoint：旋转度数后的锚点位置
     const p = rotate(resizePoint, resizeBox.value.r, center)
     // 对角点：resize时候对角点位置保持不变，锚点位置不断改变
     oppositePoint = calculateOtherEndpoint(center, p)
-  }
-}
 
-let controlMove = ref(false)
-const onResizeStartMove = (e) => {
-  if(!controlMove.value) {
-    controlMove.value = true
-    const start = screen2svg(e.clientX, e.clientY)
-    startPoint.value = start
   }
+  
 }
 
 
-let hidden = ref(false)
-// 屏幕移动
+const findFixPoint = () => {
+  console.log('这里---')
+  const { rect } = tempNode
+  resizePoint.x = rect.x + rect.width
+  resizePoint.y = rect.y + rect.height
+  const center = {
+    x: rect.x + (rect.width / 2),
+    y: rect.y + (rect.height / 2)
+  }
+  const p = rotate(resizePoint, resizeBox.value.r, center)
+
+  const anotherPoint = calculateOtherEndpoint(center, p)
+
+  ball.value.style.left = anotherPoint.x + 'px'
+  ball.value.style.top = anotherPoint.y  + 'px'
+}
+
+// 移动
 const move = (e) => {
   e.preventDefault();
   let _h = svgWrapperRef.value.offsetHeight 
@@ -471,7 +408,6 @@ const move = (e) => {
     const end = screen2svg(e.clientX, e.clientY)
     const {x, y, w, h} = generateSize(start, end)
     setNodeSize(tempNode, x, y, w, h)
-    setOperatePoint(originOperate,tempNode)
   }
   // 移动工具栏
   else if(toolHandleMove.value) {
@@ -484,140 +420,216 @@ const move = (e) => {
   }
   // resize Node
   else if(isResize.value && resizeDirection) {
-    if(!hidden.value) {
-      hidden.value = true
-    }
     const { rect } = tempNode
     // 鼠标坐标
-    let curMouse = screen2svg(e.clientX,e.clientY)
-    let size = null,
-        line = null,
-        vertical = null,
-        opposite = null,
-        newCenter = null,
-        originResize = null,
-        oriOppositePoint = null
-    // 四条边的中点
-    if(!resizeDirection.includes('-')) {
-      const center = {
-        x: rect.x + (rect.width / 2),
-        y: rect.y + (rect.height / 2)
-      }
-      if(resizeDirection == 'top' || resizeDirection == 'bottom') {
-        // 取右边的两个顶点，做垂直边
-        const rightTop = {
-          x: rect.x + rect.width,
-          y: rect.y
-        }
-        const rotateRightTop = rotate(rightTop, resizeBox.value.r, center)
-        const rightBottom = {
-          x: rect.x + rect.width,
-          y: rect.y + rect.height
-        }
-        const rotateRightBottom = rotate(rightBottom, resizeBox.value.r, center)
-        line = startEndPointToLine(rotateRightTop, rotateRightBottom)
-        if(resizeDirection == 'top') {
-          opposite = rotate({ x: rect.x, y: rect.y + rect.height }, resizeBox.value.r, center)
-        }else{
-          opposite = rotate({ x: rect.x, y: rect.y }, resizeBox.value.r, center)
-        }
-        // 鼠标与垂边的垂点
-        vertical = verticalLinePoint(line, curMouse)    
-      }else{
-        // 取下边的两个顶点，做垂直边 
-        const rightBottom = {
-          x: rect.x + rect.width,
-          y: rect.y + rect.height
-        }
-        const rotateRightBottom = rotate(rightBottom, resizeBox.value.r, center)
-        const LeftBottom = {
-          x: rect.x,
-          y: rect.y + rect.height
-        }
-        const rotateLeftBottom = rotate(LeftBottom, resizeBox.value.r, center)
-        line = startEndPointToLine(rotateRightBottom, rotateLeftBottom)
-        if(resizeDirection == 'right') {
-          opposite = rotate({ x: rect.x, y: rect.y }, resizeBox.value.r, center)
-        }else{
-          opposite = rotate({ x: rect.x + rect.width, y: rect.y }, resizeBox.value.r, center)
-        }
-        // 鼠标与垂边的垂点
-        vertical = verticalLinePoint(line, curMouse)
-      }
-      newCenter = midpoint(vertical, opposite)
-      // 偏移回正角度
-      originResize = rotate(vertical, -resizeBox.value.r, newCenter)
-      oriOppositePoint = rotate(opposite, -resizeBox.value.r, newCenter)
-      resizeDirection = dirReverse(originResize, oriOppositePoint, resizeDirection)
-      size = generateSize(oriOppositePoint, originResize)
-    }
-    // 对角点
-    else{
-      // 注意：锚点位置确定了，但是鼠标开始的落点不一定是锚点的位置，会有偏差，这里暂时假设就是锚点位置，直接求新中点
-      // 鼠标位置 与 对角固定点求 中点
-      const newCenter = midpoint(oppositePoint, curMouse)
-      // 将鼠标点偏移回正角度
-      const originMouse = rotate(curMouse, -resizeBox.value.r, newCenter)
-      const oriOppositePoint = rotate(oppositePoint, -resizeBox.value.r, newCenter)
-      size = generateSize(oriOppositePoint, originMouse)
-    }
-    setResizeBox(size.x, size.y, size.w, size.h, rect.rotate)
-    setNodeSize(tempNode, size.x, size.y,size.w, size.h)
-    setOperatePoint(originOperate,tempNode)
+    const curMouse = screen2svg(e.clientX,e.clientY)
+
+    // 注意：锚点位置确定了，但是鼠标开始的落点不一定是锚点的位置，会有偏差，这里暂时假设就是锚点位置，直接求新中点
+    // 鼠标位置 与 对角固定点求 中点
+    const newCenter = midpoint(oppositePoint, curMouse)
+
+    // 将鼠标点偏移回正角度
+    const originMouse = rotate(curMouse, -resizeBox.value.r, newCenter)
+    const oriOppositePoint = rotate(oppositePoint, -resizeBox.value.r, newCenter)
+
+    const { x,y,w,h } = generateSize(oriOppositePoint, originMouse)
+
+    // 操作框只变化旋转中心
+    resizeRotate.value = `rotate(${resizeBox.value.r},${newCenter.x},${newCenter.y})`
+    resizeBox.value.x = x
+    resizeBox.value.y = y
+    resizeBox.value.w = w
+    resizeBox.value.h = h
+
+    tempNode.rect.x = x
+    tempNode.rect.y = y
+    tempNode.rect.width = w
+    tempNode.rect.height = h
   }
   // 旋转
   else if(isResize.value && isRotate) {
-    if(!hidden.value) {
-      hidden.value = true
-    }
     const { rect } = tempNode
     const center = {
       x: rect.x + (rect.width / 2),
       y: rect.y + (rect.height / 2)
     }
     const cur = screen2svg(e.clientX, e.clientY)
+    // const mousePos = mousePointInStage(e)
+    // console.log(mousePos,'mousePos')
+    // const info = {
+    //   width: rect.width,
+    //   height: rect.height,
+    //   x: rect.x,
+    //   y: rect.y,
+    // }
+    // const center = { x: info.x + info.width / 2, y: info.y + info.height / 2 };
+
+    // let angle = lineAngle(center, mousePos);
+
+    // angle += radianToAngle(Math.atan((info.height + 15) / info.width));
+    // angle += angle < 0 ? 360 : 0;
+    // // 按下shify以5度为倍数变化旋转角度
+    // const adsorbAngles = [0, 90, 180, 270, 360];
+    // // 角度吸附处理
+    // // adsorbAngles.forEach((degree) => {
+    // //   angle = Math.abs(angle - degree) < 1 ? degree : angle;
+    // // });
+    // angle = angle > 360 ? 360 : angle;//
+
+    // console.log(angle,'angle')
     const angle = calculateRotation(center.x, center.y, cur.x, cur.y, rect.width, rect.height)
-    // 吸附角度
     tempNode.rect.rotate = angle
     resizeBox.value.r = angle
-    setOperatePoint(originOperate, tempNode)
-  }
-  // 拖动
-  else if(controlMove.value) {
-    if(!hidden.value) {
-      hidden.value = true
-    }
-    const curMouse = screen2svg(e.clientX,e.clientY)
-    const diff = {
-      x: curMouse.x - startPoint.value.x,
-      y: curMouse.y - startPoint.value.y
-    }
-    tempNode.rect.x += diff.x
-    tempNode.rect.y += diff.y
-    resizeBox.value.x += diff.x
-    resizeBox.value.y += diff.y
-    startPoint.value = curMouse
-    tempNode.rect.translate.x += diff.x
-    tempNode.rect.translate.y += diff.y
-    // 圆形和菱形都是基于自身左上角进行偏移
-    setOperatePoint(originOperate, tempNode)
+    resizeRotate.value = `rotate(${resizeBox.value.r},${resizeBox.value.x + resizeBox.value.w / 2},${resizeBox.value.y + resizeBox.value.h / 2})`
 
   }
 }
 
-const dirReverse = (p1,p2,dir) => {
-  if(dir == 'top' || dir == 'bottom') {
-    return p1.y > p2.y ? 'bottom' : 'top'
-  }else if(dir == 'left' || dir == 'right'){
-    return p1.x > p2.x ? 'right' : 'left'
-  }
+// 计算同端点两条线段间的夹角
+function calculateAngle(C, A, D) {
+    // 向量 CA 和 CD
+    const CA = { x: A.x - C.x, y: A.y - C.y };
+    const CD = { x: D.x - C.x, y: D.y - C.y };
+
+    // 点积
+    const dotProduct = CA.x * CD.x + CA.y * CD.y;
+
+    // 向量模长
+    const magnitudeCA = Math.sqrt(CA.x ** 2 + CA.y ** 2);
+    const magnitudeCD = Math.sqrt(CD.x ** 2 + CD.y ** 2);
+
+    // 计算 cosθ
+    const cosTheta = dotProduct / (magnitudeCA * magnitudeCD);
+
+    // 计算夹角 (弧度转角度)
+    const angleInRadians = Math.acos(cosTheta);
+    const angleInDegrees = (angleInRadians * 180) / Math.PI;
+
+    return angleInDegrees;
 }
+
+function calculateRectDimensions(x1, y1, x2, y2, theta) {
+    const rad = (angle) => (Math.PI / 180) * angle; // 转为弧度
+
+    // 对角线长度
+    const d = Math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2);
+
+    // 对角线方向角
+    const phi = Math.atan2(y2 - y1, x2 - x1); // 弧度制
+
+    // 宽高的夹角
+    const thetaW = phi - rad(theta);
+
+    // 宽和高
+    const w = Math.abs(d * Math.cos(thetaW));
+    const h = Math.abs(d * Math.sin(thetaW));
+
+    return { w: w, h: h };
+}
+
+function calCenter(a,b) {
+  const xC = (a.x + b.x) / 2;
+  const yC = (a.y + b.y) / 2;
+  return { x: xC, y: yC };
+}
+
+function  mousePointInStage (e){
+    // const { stage, scale = 1 } = this.props;
+    const scale = 1
+    const { pageX, pageY } = e;
+    // const { coordinate: stagePos } = stage.store();
+    const stagePos = svgRef.value.getBoundingClientRect()
+    const mousePoint = {
+      x: pageX - stagePos.x,
+      y: pageY - stagePos.y
+    };
+    mousePoint.x /= scale;
+    mousePoint.y /= scale;
+    return mousePoint;
+  };
+
+function calculateNewCenter(x, y, w, h, angle, deltaW) {
+  // 初始中心点
+  const cx = x + w / 2;
+  const cy = y + h / 2;
+
+  // 转换角度为弧度
+  const rad = (angle * Math.PI) / 180;
+
+  // 新的宽高
+  const newW = w + deltaW;
+  const newH = h + deltaW;
+
+  // 宽高偏移量在旋转前坐标系的值
+  const deltaCx = (newW - w) / 2;
+  const deltaCy = (newH - h) / 2;
+
+  // 旋转变换到全局坐标系
+  const rotatedDeltaCx = deltaCx * Math.cos(rad) - deltaCy * Math.sin(rad);
+  const rotatedDeltaCy = deltaCx * Math.sin(rad) + deltaCy * Math.cos(rad);
+
+  // 新的中心点
+  const newCx = cx + rotatedDeltaCx;
+  const newCy = cy + rotatedDeltaCy;
+
+  return { newCx, newCy };
+}
+
+// 测试
+const x = 200; // 初始左上角
+const y = 200;
+const w = 100; // 初始宽高
+const h = 100;
+const angle = 45; // 旋转角度
+const deltaW = 50; // 宽高增加量
+
+const newCenter = calculateNewCenter(x, y, w, h, angle, deltaW);
+console.log("变化后的中心点:", newCenter);
 
 // 计算矩形对角线另一端点坐标的函数
 function calculateOtherEndpoint(midpoint, pointA) {
-  const x2 = 2 * midpoint.x - pointA.x;
-  const y2 = 2 * midpoint.y - pointA.y;
-  return { x: x2, y: y2 };
+    const x2 = 2 * midpoint.x - pointA.x;
+    const y2 = 2 * midpoint.y - pointA.y;
+
+    return { x: x2, y: y2 };
+}
+
+// 根据旋转后的顶点计算未旋转时的顶点
+function calculateOriginalVertices(cx, cy, rotatedVertices, angle) {
+  // 转换角度为弧度
+  const rad = (angle * Math.PI) / 180;
+
+  // 使用逆旋转矩阵计算未旋转的坐标
+  return rotatedVertices.map(({ x: xPrime, y: yPrime }) => {
+    const dx = xPrime - cx;
+    const dy = yPrime - cy;
+
+    const x = cx + dx * Math.cos(-rad) - dy * Math.sin(-rad);
+    const y = cy + dx * Math.sin(-rad) + dy * Math.cos(-rad);
+
+    return { x, y };
+  });
+}
+
+// 根据旋转角度计算出旋转后的顶点坐标
+function calculateRotatedVertices(cx, cy, w, h, angle) {
+  // 转换角度为弧度
+  const rad = (angle * Math.PI) / 180;
+
+  // 顶点初始坐标相对于中心点的偏移量
+  const offsets = [
+    [-w / 2, -h / 2], // 左上角
+    [w / 2, -h / 2],  // 右上角
+    [-w / 2, h / 2],  // 左下角
+    [w / 2, h / 2],   // 右下角
+  ];
+
+  // 计算旋转后的顶点坐标
+  return offsets.map(([dx, dy]) => {
+    const x = cx + dx * Math.cos(rad) - dy * Math.sin(rad);
+    const y = cy + dx * Math.sin(rad) + dy * Math.cos(rad);
+    return { x, y };
+  });
 }
 
 function calculateRotation(cx, cy, x, y, width, height) {
@@ -636,6 +648,19 @@ const throttleMove = throttle(move, 10)
 
 
 // 工具栏
+let startPoint = ref({x: 0, y: 0})
+let lastPoint = ref({x: 0, y: 0})
+let toolBarRect = ref({x: 1000, y: 35, ox: 0,oy: 0})
+let toolHandleMove = ref(false)
+let toolBar = ref(null)
+let createType = ref({
+  name: '',
+  type: null,
+  imgUrl: ''
+})
+let isOnCreate = ref(false)  // 选择创建类型
+let isAddNew = ref(false)    // 已添加了图形，未开始绘制
+let isDraw = ref(false)
 const onToolMove = (e) => {
   e.preventDefault()
   toolHandleMove.value = true
@@ -666,7 +691,8 @@ let rectInfo = ref([
   {
     name: '直角矩形',
     type: 3,
-    imgUrl: '直角矩形.png',  
+    imgUrl: '直角矩形.png', // 
+    d: 'M2,2 L30,2 L30,30 L2,30 L2,2'
   },
   {
     name: '圆形',
@@ -690,19 +716,9 @@ function screen2svg(x, y) {
   return startSVGPoint
 }
 
-function setResizeBox(x,y,w,h,r = 0) {
-  resizeBox.value.x = x
-  resizeBox.value.y = y
-  resizeBox.value.w = w
-  resizeBox.value.h = h
-  resizeBox.value.r = r
-}
-
 function setNodeSize(node,x,y,w,h) {
   tempNode.rect.width = w
   tempNode.rect.height = h
-  tempNode.rect.translate.x = 0
-  tempNode.rect.translate.y = 0
   switch(node.type) {
     case 1: 
       // 圆角矩形
@@ -764,18 +780,18 @@ function createNode() {
       height: 0,
       rx: 0,
       ry: 0,
-      fill: `hsla(${Math.random() * 90 + 180}, 70%, 60%, ${Math.random().toFixed(1)})`,
+      fill: 'transparent',
       cx: 0,
       cy: 0,
       r: 0,
-      stroke: `hsl(${Math.random() * 90 + 180}, 70%, 60%)`,
+      stroke: 'salmon',
       strokeWidth: 3,
       points: '',
       rotate: 0,
       translate: {
         x: 0,
         y: 0
-      },
+      }
     },
     type: createType.value.type,
   }
@@ -786,24 +802,16 @@ function createNode() {
 <style lang="less" scoped>
 .wrapper{
   overflow: hidden;
+  // height: 80%;
+  // width: 80%;
   height: 100%;
   position: relative;
   background-color: rgb(250,250,250);
   background: radial-gradient(circle at 1px 1px,rgb(201, 201, 202) 2px,rgb(243,243,245) 0); 
   background-size: 49.5px 49.5px; 
-  .attrs-box{
-    position: fixed;
-    top: 50px;
-    left: 50px;
-  }
   .svg-element{
     width: 100%;
     height: 100%;
-    .line{
-      stroke: #147be3;
-      fill: none;
-      stroke-width: 2px;
-    }
   }
   .tool-bar{
     position: fixed;
@@ -840,7 +848,6 @@ function createNode() {
         img,svg{
           width: 100%;
           height: 100%;
-          
         }
       }
     }
@@ -869,10 +876,6 @@ function createNode() {
 }
 .top{
   z-index: 999;
-  background-color: aqua;
-}
-.visibility-hidden{
-  visibility: hidden;
 }
 .left-top{
   cursor: se-resize;
